@@ -4,13 +4,16 @@ import SwiftUI
 /// impact statement. /gear/{id}/change records one tuning event.
 struct GearDetailView: View {
     @EnvironmentObject var state: AppState
+    @Environment(\.dismiss) private var dismiss
     let gear: GearSetup
 
     @State private var showsEdit = false
     @State private var showsChange = false
     @State private var confirmDelete = false
+    @State private var deleteFailed = false
 
-    private var changes: [TuningChange] { state.changes(for: gear) }
+    private var currentGear: GearSetup { state.gearProfile(id: gear.gearID) ?? gear }
+    private var changes: [TuningChange] { state.changes(for: currentGear) }
 
     var body: some View {
         ScrollView {
@@ -22,7 +25,7 @@ struct GearDetailView: View {
             .padding()
         }
         .background(Theme.paper.ignoresSafeArea())
-        .navigationTitle(gear.name)
+        .navigationTitle(currentGear.name)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Edit") { showsEdit = true }
@@ -30,30 +33,35 @@ struct GearDetailView: View {
             }
         }
         .sheet(isPresented: $showsEdit) {
-            NavigationView { GearEditView(gear: gear, isPresented: $showsEdit) }
+            NavigationView { GearEditView(gear: currentGear, isPresented: $showsEdit) }
                 .navigationViewStyle(.stack)
                 .environmentObject(state)
         }
         .sheet(isPresented: $showsChange) {
-            NavigationView { TuningChangeView(gear: gear, isPresented: $showsChange) }
+            NavigationView { TuningChangeView(gear: currentGear, isPresented: $showsChange) }
                 .navigationViewStyle(.stack)
                 .environmentObject(state)
         }
         .alert("Delete this gear profile?", isPresented: $confirmDelete) {
-            Button("Delete", role: .destructive) { state.deleteGear(gear) }
+            Button("Delete", role: .destructive, action: deleteGear)
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Its tuning change history is deleted with it. Sessions that used this gear keep their data.")
+        }
+        .alert("Could not delete gear profile", isPresented: $deleteFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Could not save on this device. Your gear profile and tuning history are still here — try deleting again.")
         }
     }
 
     private var paramsCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             SectionLabel(text: "Setup")
-            paramRow("Bow type", gear.bowType.displayName)
-            paramRow("Limbs", gear.limbSpec.isEmpty ? "—" : gear.limbSpec)
-            paramRow("Arrows", gear.arrowSpec.isEmpty ? "—" : gear.arrowSpec)
-            paramRow("Sight mark", gear.sightMark.isEmpty ? "—" : gear.sightMark)
+            paramRow("Bow type", currentGear.bowType.displayName)
+            paramRow("Limbs", currentGear.limbSpec.isEmpty ? "—" : currentGear.limbSpec)
+            paramRow("Arrows", currentGear.arrowSpec.isEmpty ? "—" : currentGear.arrowSpec)
+            paramRow("Sight mark", currentGear.sightMark.isEmpty ? "—" : currentGear.sightMark)
             Button { showsChange = true } label: {
                 Label("Record tuning change", systemImage: "slider.horizontal.3")
                     .font(.body.weight(.semibold))
@@ -108,7 +116,7 @@ struct GearDetailView: View {
                             }
                         }
                         Spacer()
-                        Text(change.changedAt, style: .date)
+                        Text(change.changedAt, format: .dateTime.month(.abbreviated).day().hour().minute())
                             .font(.caption2)
                             .foregroundColor(Theme.inkSoft)
                     }
@@ -118,6 +126,14 @@ struct GearDetailView: View {
                     .accessibilityElement(children: .combine)
                 }
             }
+        }
+    }
+
+    private func deleteGear() {
+        if state.deleteGear(currentGear) {
+            dismiss()
+        } else {
+            deleteFailed = true
         }
     }
 

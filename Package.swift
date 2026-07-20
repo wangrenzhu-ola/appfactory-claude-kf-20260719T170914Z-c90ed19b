@@ -12,10 +12,21 @@ let package = Package(
             name: "ArrowTuneCore",
             path: "Sources/ArrowTuneCore"
         ),
+        .target(
+            name: "ArrowTuneAppLogic",
+            dependencies: ["ArrowTuneCore"],
+            path: "Sources/ArrowTuneApp",
+            sources: ["AppState.swift", "ProStore.swift"]
+        ),
         .testTarget(
             name: "ArrowTuneCoreTests",
             dependencies: ["ArrowTuneCore"],
             path: "Tests/ArrowTuneCoreTests"
+        ),
+        .testTarget(
+            name: "ArrowTuneAppTests",
+            dependencies: ["ArrowTuneAppLogic", "ArrowTuneCore"],
+            path: "Tests/ArrowTuneAppTests"
         ),
     ],
     swiftLanguageVersions: [.v5]

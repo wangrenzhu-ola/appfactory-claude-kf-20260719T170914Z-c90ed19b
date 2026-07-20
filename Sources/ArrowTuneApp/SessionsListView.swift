@@ -57,12 +57,13 @@ struct SessionsListView: View {
         .listStyle(.plain)
     }
 
-    /// vis-empty-quiver: flat vector illustration of a quiver and target with
-    /// generous whitespace, drawn on device — no external imagery.
+    /// vis-empty-quiver: product illustration for the empty session state.
     private var emptyState: some View {
         VStack(spacing: 20) {
             Spacer()
-            EmptyQuiverIllustration()
+            Image("vis-empty-quiver")
+                .resizable()
+                .scaledToFit()
                 .frame(width: 180, height: 180)
                 .accessibilityHidden(true)
             Text("No sessions yet")
@@ -131,43 +132,5 @@ struct SessionCard: View {
         let magnitude = (report.centerOffsetX * report.centerOffsetX
             + report.centerOffsetY * report.centerOffsetY).squareRoot()
         return magnitude * session.targetFace.scoringRadiusCm
-    }
-}
-
-/// Flat vector quiver + target motif for the empty state.
-struct EmptyQuiverIllustration: View {
-    var body: some View {
-        Canvas { context, size in
-            let side = min(size.width, size.height)
-            let center = CGPoint(x: side * 0.62, y: side * 0.42)
-            // Target rings.
-            for ring in 1...5 {
-                let radius = side * 0.30 * Double(6 - ring) / 5.0
-                let rect = CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)
-                let path = Path(ellipseIn: rect)
-                context.fill(path, with: .color(Theme.ringFill(ring: ring * 2)))
-                context.stroke(path, with: .color(Theme.ink.opacity(0.25)), lineWidth: 0.8)
-            }
-            // Quiver body.
-            var quiver = Path()
-            let qx = side * 0.16, qy = side * 0.42, qw = side * 0.16, qh = side * 0.42
-            quiver.addRoundedRect(in: CGRect(x: qx, y: qy, width: qw, height: qh),
-                                  cornerSize: CGSize(width: 6, height: 6))
-            context.fill(quiver, with: .color(Theme.ink))
-            // Arrows in the quiver.
-            for i in 0..<3 {
-                let ax = qx + qw * (0.25 + 0.25 * Double(i))
-                var shaft = Path()
-                shaft.move(to: CGPoint(x: ax, y: qy + side * 0.04))
-                shaft.addLine(to: CGPoint(x: ax, y: qy - side * 0.16 - Double(i) * side * 0.02))
-                context.stroke(shaft, with: .color(Theme.inkSoft), lineWidth: 2)
-                var tip = Path()
-                tip.move(to: CGPoint(x: ax - 3, y: qy - side * 0.16 - Double(i) * side * 0.02))
-                tip.addLine(to: CGPoint(x: ax + 3, y: qy - side * 0.16 - Double(i) * side * 0.02))
-                tip.addLine(to: CGPoint(x: ax, y: qy - side * 0.20 - Double(i) * side * 0.02))
-                tip.closeSubpath()
-                context.fill(tip, with: .color(Theme.signal))
-            }
-        }
     }
 }

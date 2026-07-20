@@ -1,5 +1,8 @@
 import Foundation
 import SwiftUI
+#if canImport(ArrowTuneCore)
+import ArrowTuneCore
+#endif
 
 /// Central application state: one local snapshot, one store, one entitlement.
 /// Zero account, zero network for data: everything persists to an on-device
@@ -177,19 +180,30 @@ final class AppState: ObservableObject {
     @discardableResult
     func updateGear(_ gear: GearSetup) -> Bool {
         guard let index = snapshot.gear.firstIndex(where: { $0.gearID == gear.gearID }) else { return false }
+        let previousSnapshot = snapshot
         snapshot.gear[index] = gear
-        return persist(notice: "Gear profile updated")
+        guard persist(notice: "Gear profile updated") else {
+            snapshot = previousSnapshot
+            return false
+        }
+        return true
     }
 
     /// Deletes the gear profile. Sessions that referenced it keep their data;
     /// its tuning events are removed with the profile.
-    func deleteGear(_ gear: GearSetup) {
+    @discardableResult
+    func deleteGear(_ gear: GearSetup) -> Bool {
+        let previousSnapshot = snapshot
         snapshot.gear.removeAll { $0.gearID == gear.gearID }
         snapshot.tuningChanges.removeAll { $0.gearID == gear.gearID }
         for index in snapshot.sessions.indices where snapshot.sessions[index].gearID == gear.gearID {
             snapshot.sessions[index].gearID = nil
         }
-        _ = persist(notice: "Gear profile deleted")
+        guard persist(notice: "Gear profile deleted") else {
+            snapshot = previousSnapshot
+            return false
+        }
+        return true
     }
 
     func changes(for gear: GearSetup) -> [TuningChange] {

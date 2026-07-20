@@ -50,6 +50,16 @@ final class ConfirmGateTests: XCTestCase {
         XCTAssertTrue(draft.impacts.isEmpty)
     }
 
+    func testMovingProposalRecalculatesRingValue() {
+        var draft = ScoringDraft()
+        draft.loadProposals([
+            DetectionProposal(xNorm: 0.0, yNorm: 0.0, ringValue: 10, confidence: 0.9)
+        ], endID: endID)
+        let id = draft.impacts[0].impactID
+        draft.moveImpact(id: id, toX: 0.25, toY: 0.0)
+        XCTAssertEqual(draft.impacts[0].ringValue, 8)
+    }
+
     func testDiscardWritesNothing() {
         let store = MemoryStore()
         var draft = ScoringDraft()

@@ -74,7 +74,7 @@ struct SessionsListView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
             Button { showsNewSession = true } label: {
-                Text("Start your first session")
+                Text("New Session")
                     .fontWeight(.semibold)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 12)

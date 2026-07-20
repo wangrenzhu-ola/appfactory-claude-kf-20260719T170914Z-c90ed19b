@@ -115,12 +115,16 @@ struct ScoringView: View {
                 impacts: [],
                 draftImpacts: draft.impacts,
                 metrics: nil,
-                showsOverlay: false
-            ) { x, y in
-                guard draft.impacts.count < 24 else { return }
-                draft.addManualImpact(xNorm: x, yNorm: y, endID: endID)
-                selectedImpactID = nil
-            }
+                showsOverlay: false,
+                onTap: { x, y in
+                    guard draft.impacts.count < 24 else { return }
+                    draft.addManualImpact(xNorm: x, yNorm: y, endID: endID)
+                    selectedImpactID = nil
+                },
+                onMoveDraftImpact: { id, x, y in
+                    draft.moveImpact(id: id, toX: x, toY: y)
+                }
+            )
             HStack {
                 Text("End total")
                     .font(.caption)

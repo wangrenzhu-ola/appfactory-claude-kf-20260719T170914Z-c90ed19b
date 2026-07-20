@@ -10,6 +10,14 @@ struct TargetFaceView: View {
     var metrics: GroupMetrics? = nil
     var showsOverlay: Bool = true
     var onTap: ((Double, Double) -> Void)? = nil
+    var onMoveDraftImpact: ((UUID, Double, Double) -> Void)? = nil
+
+    @State private var dragState = DragState.idle
+
+    private enum DragState {
+        case idle
+        case dragging(impactID: UUID, didMove: Bool)
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -80,12 +88,11 @@ struct TargetFaceView: View {
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        handleDrag(value: value, size: geo.size, scale: scale)
+                    }
                     .onEnded { value in
-                        guard let onTap else { return }
-                        let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-                        let x = (value.location.x - center.x) / scale
-                        let y = (center.y - value.location.y) / scale
-                        onTap(x, y)
+                        handleDragEnd(value: value, size: geo.size, scale: scale)
                     }
             )
             .accessibilityElement(children: .ignore)
@@ -94,6 +101,61 @@ struct TargetFaceView: View {
         .aspectRatio(1, contentMode: .fit)
         .background(Theme.paper)
         .overlay(Rectangle().stroke(Theme.hairline, lineWidth: 1))
+    }
+
+    private func point(for impact: ArrowImpact, size: CGSize, scale: Double) -> CGPoint {
+        CGPoint(x: size.width / 2 + impact.xNorm * scale,
+                y: size.height / 2 - impact.yNorm * scale)
+    }
+
+    private func handleDrag(value: DragGesture.Value, size: CGSize, scale: Double) {
+        let location = value.location
+        switch dragState {
+        case .idle:
+            // First meaningful movement: decide if this is a drag of an existing draft.
+            let threshold: Double = 22
+            if let nearest = draftImpacts.min(by: {
+                distance(point(for: $0, size: size, scale: scale), location)
+                    < distance(point(for: $1, size: size, scale: scale), location)
+            }), distance(point(for: nearest, size: size, scale: scale), location) <= threshold {
+                dragState = .dragging(impactID: nearest.impactID, didMove: false)
+            } else {
+                // Not on a draft marker; mark as a drag-in-progress so onEnded
+                // does not fire a tap either.
+                dragState = .dragging(impactID: UUID(), didMove: true)
+            }
+        case .dragging(let impactID, _):
+            guard let onMoveDraftImpact,
+                  let impact = draftImpacts.first(where: { $0.impactID == impactID }) else { return }
+            let xNorm = (location.x - size.width / 2) / scale
+            let yNorm = (size.height / 2 - location.y) / scale
+            // Ignore tiny jitter until the finger has moved a few points.
+            let startPoint = point(for: impact, size: size, scale: scale)
+            let moved = distance(startPoint, location) > 4
+            if moved {
+                onMoveDraftImpact(impactID, xNorm, yNorm)
+                dragState = .dragging(impactID: impactID, didMove: true)
+            }
+        }
+    }
+
+    private func handleDragEnd(value: DragGesture.Value, size: CGSize, scale: Double) {
+        switch dragState {
+        case .idle, .dragging(_, didMove: true):
+            break
+        case .dragging(_, didMove: false):
+            // Treated as a tap: convert to normalized target coordinates.
+            if let onTap {
+                let x = (value.location.x - size.width / 2) / scale
+                let y = (size.height / 2 - value.location.y) / scale
+                onTap(x, y)
+            }
+        }
+        dragState = .idle
+    }
+
+    private func distance(_ a: CGPoint, _ b: CGPoint) -> Double {
+        Double(hypot(a.x - b.x, a.y - b.y))
     }
 
     private var accessibilitySummary: String {

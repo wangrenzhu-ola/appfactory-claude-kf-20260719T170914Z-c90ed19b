@@ -38,7 +38,7 @@ struct ScoringView: View {
                     Button {
                         detectionState = .idle
                     } label: {
-                        Label("Switch to manual entry", systemImage: "hand.tap")
+                        Label("Switch to manual", systemImage: "hand.tap")
                             .font(.body.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)

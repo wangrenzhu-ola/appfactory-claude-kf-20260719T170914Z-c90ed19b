@@ -208,10 +208,9 @@ struct MetricLineView: View {
             let span = max(maxDate.timeIntervalSince(minDate), 1)
             let maxDensity = max(series.map(\.report.densityRadius).max() ?? 1, 0.01)
 
-            func point(for entry: (date: Date, report: DiagnosisReport)) -> CGPoint {
-                let x = CGFloat(entry.date.timeIntervalSince(minDate) / span) * geo.size.width
-                let y = geo.size.height - CGFloat(entry.report.densityRadius / maxDensity) * (geo.size.height - 12) - 6
-                return CGPoint(x: x, y: y)
+            let point = { (entry: (date: Date, report: DiagnosisReport)) -> CGPoint in
+                CGPoint(x: CGFloat(entry.date.timeIntervalSince(minDate) / span) * geo.size.width,
+                        y: geo.size.height - CGFloat(entry.report.densityRadius / maxDensity) * (geo.size.height - 12) - 6)
             }
 
             Canvas { context, size in
@@ -227,13 +226,13 @@ struct MetricLineView: View {
                 if series.count > 1 {
                     var line = Path()
                     for (index, entry) in series.enumerated() {
-                        let p = point(for: entry)
+                        let p = point(entry)
                         if index == 0 { line.move(to: p) } else { line.addLine(to: p) }
                     }
                     context.stroke(line, with: .color(Theme.ink), lineWidth: 1.4)
                 }
                 for entry in series {
-                    let p = point(for: entry)
+                    let p = point(entry)
                     let dot = Path(ellipseIn: CGRect(x: p.x - 3, y: p.y - 3, width: 6, height: 6))
                     context.fill(dot, with: .color(Theme.ink))
                 }

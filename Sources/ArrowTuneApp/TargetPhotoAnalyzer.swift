@@ -34,7 +34,9 @@ enum TargetPhotoAnalyzer {
         guard let observation = request.results?.first else { return [] }
         let side = Double(min(cgImage.width, cgImage.height))
         var candidates: [DetectionCandidate] = []
-        collect(observation: observation, side: side, into: &candidates, depth: 0)
+        for contour in observation.topLevelContours {
+            collect(observation: contour, side: side, into: &candidates, depth: 0)
+        }
         return candidates
     }
 

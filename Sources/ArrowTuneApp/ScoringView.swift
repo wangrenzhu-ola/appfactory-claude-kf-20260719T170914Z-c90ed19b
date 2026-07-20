@@ -39,7 +39,7 @@ struct ScoringView: View {
                         detectionState = .idle
                     } label: {
                         Label("Switch to manual entry", systemImage: "hand.tap")
-                            .fontWeight(.semibold)
+                            .font(.body.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
                             .background(Theme.ink)
@@ -150,7 +150,7 @@ struct ScoringView: View {
                     }
                 } label: {
                     Label("Read photo", systemImage: "camera.viewfinder")
-                        .fontWeight(.semibold)
+                        .font(.body.weight(.semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .background(Theme.signal)

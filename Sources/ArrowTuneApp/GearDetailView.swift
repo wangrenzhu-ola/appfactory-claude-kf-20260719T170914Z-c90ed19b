@@ -56,7 +56,7 @@ struct GearDetailView: View {
             paramRow("Sight mark", gear.sightMark.isEmpty ? "—" : gear.sightMark)
             Button { showsChange = true } label: {
                 Label("Record tuning change", systemImage: "slider.horizontal.3")
-                    .fontWeight(.semibold)
+                    .font(.body.weight(.semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
                     .background(Theme.signal)

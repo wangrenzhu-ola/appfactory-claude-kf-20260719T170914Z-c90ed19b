@@ -23,7 +23,7 @@ struct GroupView: View {
                     metricGrid(metrics)
                     NavigationLink(destination: DiagnosisDetailView(session: session)) {
                         Label("Review diagnosis", systemImage: "stethoscope")
-                            .fontWeight(.semibold)
+                            .font(.body.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
                             .background(Theme.ink)
